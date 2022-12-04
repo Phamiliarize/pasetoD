@@ -1,8 +1,10 @@
-# pasetoD
+# pasetoD (WIP)
 
 Zero-dependency Deno solution for working with
 [Paseto tokens](https://github.com/paseto-standard/paseto-spec) in Web Crypto
 API compatible runtimes.
+
+__NOTE:__ This is an unstable, WIP implementation. Do not use this for an application.
 
 ### Supported Platforms
 
