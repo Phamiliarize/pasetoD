@@ -4,13 +4,24 @@ Zero-dependency Deno solution for working with
 [Paseto tokens](https://github.com/paseto-standard/paseto-spec) in Web Crypto
 API/Web Standards compatible runtimes.
 
-__NOTE:__ !!!This is an unstable, WIP implementation. Do not use this in any REAL WORLD cases yet.
+**NOTE:** !!!This is an unstable, WIP implementation. Do not use this in any
+REAL WORLD cases yet.
 
-### Supported Platforms
+## Supported Platforms
 
 - Deno (^1.27.2)
 
-### Usage
+## Supported PASETO versions
+
+Being Web Crypto API based has limitations, be aware that only the following is
+supported:
+
+|          | v1 | v2 | v3 | v4 |
+| -------- | -- | -- | -- | -- |
+| `local`  | ✅  | ✅  | ✅  | ✅  |
+| `public` | ✅  | ✅  | ✅  | ✅  |
+
+## Usage
 
 ### Testing
 
@@ -38,7 +49,7 @@ deno test --coverage=cov_profile --no-check
 deno coverage cov_profile
 ```
 
-### Reference Implementations
+## Reference Implementations
 
 In addition to the
 [paseto specifications](https://github.com/paseto-standard/paseto-spec) the

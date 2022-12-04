@@ -1,9 +1,9 @@
 import {
   assertEquals,
-  assertThrows
+  assertThrows,
 } from "https://deno.land/std@0.167.0/testing/asserts.ts";
 import { InvalidToken } from "../error/mod.ts";
-import { _parse } from "./mod.ts";
+import { _parse_raw_token } from "./raw_parser.ts";
 
 const LOCAL_TOKEN =
   "v2.local.QAxIpVe-ECVNI1z4xQbm_qQYomyT3h8FtV8bxkz8pBJWkT8f7HtlOpbroPDEZUKop_vaglyp76CzYy375cHmKCW8e1CCkV0Lflu4GTDyXMqQdpZMM1E6OaoQW27gaRSvWBrR3IgbFIa0AkuUFw";
@@ -16,7 +16,7 @@ const BAD_PURPOSE_TOKEN =
   "v2.glorious.eyJleHAiOiIyMDM5LTAxLTAxVDAwOjAwOjAwKzAwOjAwIiwiZGF0YSI6InRoaXMgaXMgYSBzaWduZWQgbWVzc2FnZSJ91gC7-jCWsN3mv4uJaZxZp0btLJgcyVwL-svJD7f4IHyGteKe3HTLjHYTGHI1MtCqJ-ESDLNoE7otkIzamFskCA";
 
 Deno.test("[Parser][Happy] Parse a local token", () => {
-  const paseto = _parse(LOCAL_TOKEN);
+  const paseto = _parse_raw_token(LOCAL_TOKEN);
   assertEquals(paseto, {
     version: "v2",
     purpose: "local",
@@ -26,7 +26,7 @@ Deno.test("[Parser][Happy] Parse a local token", () => {
 });
 
 Deno.test("[Parser][Happy] Parse a local token w/ footer", () => {
-  const paseto = _parse(LOCAL_TOKEN + FOOTER);
+  const paseto = _parse_raw_token(LOCAL_TOKEN + FOOTER);
   assertEquals(paseto, {
     version: "v2",
     purpose: "local",
@@ -36,7 +36,7 @@ Deno.test("[Parser][Happy] Parse a local token w/ footer", () => {
 });
 
 Deno.test("[Parser][Happy] Parse a public token", () => {
-  const paseto = _parse(PUBLIC_TOKEN);
+  const paseto = _parse_raw_token(PUBLIC_TOKEN);
   assertEquals(paseto, {
     version: "v2",
     purpose: "public",
@@ -49,7 +49,7 @@ Deno.test("[Parser][Happy] Parse a public token", () => {
 });
 
 Deno.test("[Parser][Happy] Parse a public token w/ footer", () => {
-  const paseto = _parse(PUBLIC_TOKEN + FOOTER);
+  const paseto = _parse_raw_token(PUBLIC_TOKEN + FOOTER);
   assertEquals(paseto, {
     version: "v2",
     purpose: "public",
@@ -63,7 +63,7 @@ Deno.test("[Parser][Happy] Parse a public token w/ footer", () => {
 
 Deno.test("[Parser][Unhappy] Passing Non-string token value", () => {
   assertThrows(
-    () => _parse(42),
+    () => _parse_raw_token(42),
     InvalidToken,
     "Token is not a valid string.",
   );
@@ -71,7 +71,7 @@ Deno.test("[Parser][Unhappy] Passing Non-string token value", () => {
 
 Deno.test("[Parser][Unhappy] Empty Token Fails", () => {
   assertThrows(
-    () => _parse(""),
+    () => _parse_raw_token(""),
     InvalidToken,
     "Token is malformed and does not conform to paseto specifications.",
   );
@@ -79,7 +79,7 @@ Deno.test("[Parser][Unhappy] Empty Token Fails", () => {
 
 Deno.test("[Parser][Unhappy] Partial Token Fails", () => {
   assertThrows(
-    () => _parse("v2.public"),
+    () => _parse_raw_token("v2.public"),
     InvalidToken,
     "Token is malformed and does not conform to paseto specifications.",
   );
@@ -87,7 +87,7 @@ Deno.test("[Parser][Unhappy] Partial Token Fails", () => {
 
 Deno.test("[Parser][Unhappy] Bad Version", () => {
   assertThrows(
-    () => _parse(BAD_VER_TOKEN),
+    () => _parse_raw_token(BAD_VER_TOKEN),
     InvalidToken,
     "The designated paseto version is unsupported.",
   );
@@ -95,7 +95,7 @@ Deno.test("[Parser][Unhappy] Bad Version", () => {
 
 Deno.test("[Parser][Unhappy] Bad Purpose", () => {
   assertThrows(
-    () => _parse(BAD_PURPOSE_TOKEN),
+    () => _parse_raw_token(BAD_PURPOSE_TOKEN),
     InvalidToken,
     "The designated paseto purpose is unsupported.",
   );
@@ -103,7 +103,7 @@ Deno.test("[Parser][Unhappy] Bad Purpose", () => {
 
 Deno.test("[Parser][Unhappy] Bad Footer - not b64", () => {
   assertThrows(
-    () => _parse(PUBLIC_TOKEN + ".undefined"),
+    () => _parse_raw_token(PUBLIC_TOKEN + ".undefined"),
     InvalidToken,
     "Token footer is not a valid base64-encoded string.",
   );
@@ -113,7 +113,7 @@ Deno.test("[Parser][Unhappy] Bad Payload - not b64", () => {
   assertThrows(
     () => {
       const { 0: version, 1: purpose } = PUBLIC_TOKEN.split(".");
-      _parse(`${version}.${purpose}.undefined`);
+      _parse_raw_token(`${version}.${purpose}.undefined`);
     },
     InvalidToken,
     "Token payload is not a valid base64-encoded string.",
@@ -125,7 +125,7 @@ Deno.test("[Parser][Unhappy] Bad Payload - b64 but not JSON", () => {
   assertThrows(
     () => {
       const { 0: version, 1: purpose } = PUBLIC_TOKEN.split(".");
-      _parse(`${version}.${purpose}${FOOTER}`);
+      _parse_raw_token(`${version}.${purpose}${FOOTER}`);
     },
     InvalidToken,
     "Token payload is not valid JSON.",
