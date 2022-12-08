@@ -23,6 +23,8 @@ supported:
 
 ## Usage
 
+import key => use webcrypto export key => use webcrypto
+
 ### Testing
 
 pasetoD uses the "happy/unhappy" path mental model for testing. You must run

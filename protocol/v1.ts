@@ -1,56 +1,118 @@
+import { ProviderError } from "../error/mod.ts";
 import { BaseProtocol, ILocalPurpose, IPublicPurpose } from "./common.ts";
+
+const encoder = new TextEncoder();
+
+interface V1LocalSecretKey extends CryptoKey {
+  algorithm: AesKeyGenParams;
+}
 
 /** Implements a local paseto provider for protocol v1 */
 class V1Local extends BaseProtocol implements ILocalPurpose {
   /**
-   * Create a paseto local provider for protocol v1
-   * @param {string | undefined } private_key - Initialize with an already existing private key
+   * Create a local paseto provider for protocol v1
+   * @param {V1LocalSecretKey | undefined } secretKey - Optionally initialize with predefined key
    */
-  private_key: string | undefined;
+  secretKey: V1LocalSecretKey | undefined;
 
-  constructor() {
+  constructor(secretKey = undefined) {
     super("v1", "local");
-    this.private_key = undefined;
+    this.secretKey = secretKey;
   }
 
-  generateKey(): void {
-    console.log("develop an app");
+  /**
+   * Generate a v1 secret key and set it to the instance.
+   * @return {void}
+   */
+  async generateKey(): Promise<void> {
+    if (this.secretKey) {
+      throw new ProviderError("This provider already has a secret key.");
+    }
+
+    this.secretKey = <V1LocalSecretKey> await crypto.subtle.generateKey(
+      {
+        name: "AES-CTR",
+        length: 256,
+      },
+      true,
+      ["encrypt", "decrypt"],
+    );
   }
 
+  /**
+   * Encrypt a v1 paseto for local usage
+   * @return {string} the generated private key.
+   */
   encrypt(): void {
     console.log("develop an app");
   }
 
+  /**
+   * Decrypt a v1 paseto for local usage
+   * @return {string} the generated private key.
+   */
   decrypt(): void {
     console.log("develop an app");
   }
 }
 
-/** Implements a public paseto public provider under protocol v1 */
+interface V1PublicKey extends CryptoKey {
+  type: "public";
+  algorithm: RsaHashedKeyGenParams;
+}
+
+interface V1PrivateKey extends CryptoKey {
+  type: "private";
+  algorithm: RsaHashedKeyGenParams;
+}
+interface V1PublicKeyPair extends CryptoKeyPair {
+  publicKey: V1PublicKey;
+  privateKey: V1PrivateKey;
+}
+
+/** Implements a public paseto provider for protocol v1 */
 class V1Public extends BaseProtocol implements IPublicPurpose {
   /**
-   * Create a paseto provider for protocol v1
-   * @param {string | undefined} private_key - Initialize with an already existing private key
-   * @param {string | undefined} public_key  - Initialize with an already existing private key
+   * Create a public paseto provider for protocol v1
+   * @param {V1PublicKeyPair | undefined} keyPair - Optionally initialize with predefined key pair
    */
-
-  private_key: string | undefined;
-  public_key: string | undefined;
+  keyPair: V1PublicKeyPair | undefined;
   signatureLength: number;
 
-  constructor() {
+  constructor(keyPair = undefined) {
     super("v1", "public");
-    this.private_key = undefined;
-    this.public_key = undefined;
+    this.keyPair = keyPair;
     this.signatureLength = 256;
   }
 
-  generateKey(): void {
-    console.log("develop an app");
+  /**
+   * Generate a v1 key pair and set it to the instance.
+   * @return {void}
+   */
+  async generateKey(): Promise<void> {
+    if (this.keyPair) {
+      throw new ProviderError("This provider already has a key pair.");
+    }
+
+    this.keyPair = <V1PublicKeyPair> await crypto.subtle.generateKey(
+      {
+        name: "RSA-PSS",
+        modulusLength: 2048,
+        publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
+        hash: { name: "SHA384" },
+      },
+      true,
+      ["sign", "verify"],
+    );
   }
 
-  sign(): void {
-    console.log("develop an app");
+  sign(message = "", footer = ""): void {
+    if (this.keyPair?.privateKey.type != "private") {
+      throw new ProviderError("Tokens must be signed with a private key.");
+    }
+    const m = encoder.encode(message);
+
+    const m2 = PA;
   }
 
   verify(): void {

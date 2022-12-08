@@ -1,6 +1,7 @@
 const CODES: Record<string, string> = {
   InvalidToken: "INVALID_TOKEN",
   InvalidTokenClaim: "INVALID_TOKEN_CLAIM",
+  ProviderError: "PROVIDER_ERROR",
   DecryptionError: "DECRYPTION_ERROR",
   VerificationError: "VERIFICATION_ERROR",
 };
@@ -25,11 +26,13 @@ class InvalidToken extends PasetoDError {}
 class InvalidTokenClaim extends PasetoDError {}
 class DecryptionError extends PasetoDError {}
 class VerificationError extends PasetoDError {}
+class ProviderError extends PasetoDError {}
 
 export {
   DecryptionError,
   InvalidToken,
   InvalidTokenClaim,
   PasetoDError,
+  ProviderError,
   VerificationError,
 };
