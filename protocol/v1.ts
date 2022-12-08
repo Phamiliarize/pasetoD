@@ -110,6 +110,7 @@ class V1Public extends BaseProtocol implements IPublicPurpose {
     if (this.keyPair?.privateKey.type != "private") {
       throw new ProviderError("Tokens must be signed with a private key.");
     }
+    const h = 'v1.public';
     const m = encoder.encode(message);
 
     const m2 = PA;
