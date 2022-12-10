@@ -1,6 +1,6 @@
 import {
   assertEquals,
-  assertThrows
+  assertThrows,
 } from "https://deno.land/std@0.167.0/testing/asserts.ts";
 import { ProviderError } from "../error/mod.ts";
 import { PAE } from "./pae.ts";

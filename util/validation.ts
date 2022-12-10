@@ -5,7 +5,7 @@ function isObject(input: object) {
 }
 
 function isString(input: string) {
-  return typeof input === 'string';
+  return typeof input === "string";
 }
 
 function validatePayload(input: object) {
@@ -16,10 +16,10 @@ function validatePayload(input: object) {
 }
 
 function validateFooter(input: string) {
-    if (!isString(input)) {
-      throw new ProviderError("Footer must be a string.");
-    }
-    return input;
+  if (!isString(input)) {
+    throw new ProviderError("Footer must be a string.");
   }
+  return input;
+}
 
-export { isObject, validatePayload, validateFooter };
+export { isObject, validateFooter, validatePayload };

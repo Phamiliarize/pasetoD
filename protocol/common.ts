@@ -1,4 +1,3 @@
-
 interface ILocalPurpose {
   version: string;
   purpose: string;
@@ -12,15 +11,13 @@ interface IPublicPurpose {
   purpose: string;
   signatureLength: number;
   sign: (payload: Record<string, unknown>, footer: string) => Promise<string>;
-  verify: (rawToken: string) => Promise<boolean>;
+  verify: (rawToken: string) => Promise<IVerifiedPasetoToken>;
   generateKey: () => Promise<void>;
 }
 
-interface IPasetoToken {
-    version: string;
-    purpose: string;
-    payload: unknown;
-    footer: string | undefined;
+interface IVerifiedPasetoToken {
+  message: unknown;
+  footer: string | undefined;
 }
 
 class BaseProtocol {
@@ -53,48 +50,17 @@ const SUPPORTED_PROTOCOLS = {
       algorithm: {
         name: "RSA-PSS",
         modulusLength: 2048,
-        publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
+        publicExponent: V1_PUBLIC_EXPONENT,
         hash: { name: "SHA-384" },
       },
       pss: {
         name: "RSA-PSS",
         saltLength: 48,
-      }
+      },
     },
   },
 };
 
-// /** Confirm a supported key is being used */
-// function checkKey(version: string, purpose: string, key: CryptoKey) {
-//   const protocol = SUPPORTED_PROTOCOLS[version][purpose];
-//   if(purpose === "local"){
-//     // Check Key Type, Algorithm
-//     if(protocol.type !== key.type) {
-//       throw new ProviderError(
-//         `Providers key is not valid for paseto protocol version ${version}.`,
-//       );
-//     }
-//   }
-
-
-//   if(purpose === "public"){
-//   }
-
-//   if
-
-
-//   key.type
-//   key.algorithm
-//   key.usages
-
-
-//   if (!VERSION[purpose]) {
-//     throw new ProviderError(
-//       `Providers key is not valid for paseto protocol version ${version}.`,
-//     );
-//   }
-// }
-
-export { BaseProtocol, SUPPORTED_PROTOCOLS, V1_PUBLIC_EXPONENT };
-export type { ILocalPurpose, IPublicPurpose };
+export { BaseProtocol, SUPPORTED_PROTOCOLS };
+export type { ILocalPurpose, IPublicPurpose, IVerifiedPasetoToken };
 

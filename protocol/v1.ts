@@ -1,13 +1,13 @@
 import { ProviderError, VerificationError } from "../error/mod.ts";
-import { _parse_raw_token } from "../parser/raw_parser.ts";
 import { packer } from "../util/packer.ts";
 import { PAE } from "../util/pae.ts";
+import { _parse_raw_token } from "../util/raw_parser.ts";
 import { validateFooter, validatePayload } from "../util/validation.ts";
 import {
   BaseProtocol,
   ILocalPurpose,
-  IPasetoToken,
   IPublicPurpose,
+  IVerifiedPasetoToken,
   SUPPORTED_PROTOCOLS
 } from "./common.ts";
 
@@ -135,12 +135,14 @@ class V1Public extends BaseProtocol implements IPublicPurpose {
       this.keyPair.privateKey,
       m2,
     );
-    
+
     return packer(h, encoded_message, signature, f);
   }
 
-  async verify(rawToken: string): Promise<IPasetoToken> {
-    const { version, purpose, payload, footer, raw } = _parse_raw_token(rawToken);
+  async verify(rawToken: string): Promise<IVerifiedPasetoToken> {
+    const { version, purpose, payload, footer, raw } = _parse_raw_token(
+      rawToken,
+    );
     const rawHeader = `${version}.${purpose}`;
     if (rawHeader !== `${this.version}.${this.purpose}`) {
       throw new VerificationError(
@@ -166,8 +168,8 @@ class V1Public extends BaseProtocol implements IPublicPurpose {
       m2,
     );
 
-    if(isVerified){
-      return { version, purpose, payload, footer }
+    if (isVerified) {
+      return { message: payload, footer };
     }
 
     throw new VerificationError("The token failed verification.");

@@ -30,8 +30,8 @@ type ParsedPaseto = {
   payload: unknown;
   footer: string | undefined;
   raw?: {
-    payload: string,
-    signatureBytes: Uint8Array
+    payload: string;
+    signatureBytes: Uint8Array;
   };
 };
 
@@ -103,11 +103,11 @@ function _parse_raw_token(token: string): ParsedPaseto {
   // Save the "raw" values for use in verification
   result.raw = {
     payload: rawPayload,
-    signatureBytes: Uint8Array.from(signature, (x) => { 
-      return x.charCodeAt(0); 
-    })
-  }
-  
+    signatureBytes: Uint8Array.from(signature, (x) => {
+      return x.charCodeAt(0);
+    }),
+  };
+
   try {
     result.payload = JSON.parse(rawPayload);
   } catch {
