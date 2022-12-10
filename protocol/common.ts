@@ -36,7 +36,19 @@ class BaseProtocol {
 
 const V1_PUBLIC_EXPONENT = new Uint8Array([0x01, 0x00, 0x01]);
 
-const SUPPORTED_PROTOCOLS = {
+interface IProtocol {
+  type: string;
+  algorithm: RsaHashedKeyAlgorithm | AesKeyAlgorithm;
+  pss?: RsaPssParams;
+}
+
+type SupportedProtocols = {
+  [v1: string]: {
+    [key: string]: IProtocol;
+  };
+};
+
+const SUPPORTED_PROTOCOLS: SupportedProtocols = {
   v1: {
     local: {
       type: "secret",
@@ -61,6 +73,13 @@ const SUPPORTED_PROTOCOLS = {
   },
 };
 
-export { BaseProtocol, SUPPORTED_PROTOCOLS };
+const REQUIRED_KEY_TYPE: Record<string, string> = {
+  "verify": "public",
+  "sign": "private",
+  "decrypt": "secret",
+  "encrypt": "secret",
+};
+
+export { BaseProtocol, REQUIRED_KEY_TYPE, SUPPORTED_PROTOCOLS };
 export type { ILocalPurpose, IPublicPurpose, IVerifiedPasetoToken };
 

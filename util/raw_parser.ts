@@ -100,13 +100,19 @@ function _parse_raw_token(token: string): ParsedPaseto {
     );
   }
 
-  // Save the "raw" values for use in verification
-  result.raw = {
-    payload: rawPayload,
-    signatureBytes: Uint8Array.from(signature, (x) => {
-      return x.charCodeAt(0);
-    }),
-  };
+  try {
+    // Save the "raw" values for use in verification
+    result.raw = {
+      payload: rawPayload,
+      signatureBytes: Uint8Array.from(signature, (x) => {
+        return x.charCodeAt(0);
+      }),
+    };
+  } catch {
+    throw new InvalidToken(
+      "Token payload and signature is invalid.",
+    );
+  }
 
   try {
     result.payload = JSON.parse(rawPayload);

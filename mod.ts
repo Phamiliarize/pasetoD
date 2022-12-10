@@ -3,7 +3,7 @@ import {
   InvalidToken,
   InvalidTokenClaim,
   PasetoDError,
-  VerificationError
+  VerificationError,
 } from "./error/mod.ts";
 import { v1 } from "./protocol/mod.ts";
 

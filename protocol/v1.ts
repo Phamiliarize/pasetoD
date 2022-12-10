@@ -2,7 +2,12 @@ import { ProviderError, VerificationError } from "../error/mod.ts";
 import { packer } from "../util/packer.ts";
 import { PAE } from "../util/pae.ts";
 import { _parse_raw_token } from "../util/raw_parser.ts";
-import { validateFooter, validatePayload } from "../util/validation.ts";
+import {
+  validateFooter,
+  validateHeader,
+  validateKeyUsage,
+  validatePayload
+} from "../util/validation.ts";
 import {
   BaseProtocol,
   ILocalPurpose,
@@ -111,24 +116,21 @@ class V1Public extends BaseProtocol implements IPublicPurpose {
     );
   }
 
+  /**
+   * Signs/generates a V1 Public Paseto Token
+   * @param {Record<string, unknown>} message - An object representing payload; must be serializable as JSON.
+   * @param {Record<string, unknown>} footer - An arbitrary text string to append to the end of a paseto token
+   * @return {Promise<string>} a signed V1 Public Paseto Token
+   */
   async sign(message: Record<string, unknown>, footer = ""): Promise<string> {
-    if (this.keyPair?.privateKey.type != "private") {
-      throw new ProviderError("Tokens must be signed with a private key.");
-    }
+    validateKeyUsage("sign", this.keyPair.privateKey);
+    // TODO: Validate message/claims
 
     const h = `${this.version}.${this.purpose}`;
     const m = validatePayload(message);
+    const u8msg = encoder.encode(JSON.stringify(m));
     const f = validateFooter(footer);
-
-    const encoded_header = encoder.encode(h);
-    const encoded_message = encoder.encode(JSON.stringify(m));
-    const encoded_footer = encoder.encode(f);
-
-    const m2 = PAE([
-      encoded_header,
-      encoded_message,
-      encoded_footer,
-    ]);
+    const m2 = PAE([h, u8msg, f]);
 
     const signature = await crypto.subtle.sign(
       SUPPORTED_PROTOCOLS.v1.public.pss,
@@ -136,30 +138,25 @@ class V1Public extends BaseProtocol implements IPublicPurpose {
       m2,
     );
 
-    return packer(h, encoded_message, signature, f);
+    return packer(h, u8msg, signature, f);
   }
 
+  /**
+   * Verifies a V1 Public Paseto Token
+   * @param {string} rawToken - A V1 Public Paseto Token in transit form
+   * @return {Promise<IVerifiedPasetoToken>} the message and footer for a verified V1 Public Paseto Token
+   */
   async verify(rawToken: string): Promise<IVerifiedPasetoToken> {
+    validateKeyUsage("verify", this.keyPair.publicKey);
+
     const { version, purpose, payload, footer, raw } = _parse_raw_token(
       rawToken,
     );
-    const rawHeader = `${version}.${purpose}`;
-    if (rawHeader !== `${this.version}.${this.purpose}`) {
-      throw new VerificationError(
-        `Token header is not valid, expected: ${this.version}.${this.purpose}`,
-      );
-    }
-
+    const h = validateHeader(this.version, this.purpose, version, purpose);
+    const f = footer || "";
     const s = raw?.signatureBytes;
-    const encoded_header = encoder.encode(rawHeader);
-    const encoded_message = encoder.encode(raw?.payload);
-    const encoded_footer = encoder.encode(footer);
-
-    const m2 = PAE([
-      encoded_header,
-      encoded_message,
-      encoded_footer,
-    ]);
+    const m = raw?.payload;
+    const m2 = PAE([h, m, f]);
 
     const isVerified = await crypto.subtle.verify(
       SUPPORTED_PROTOCOLS.v1.public.pss,
@@ -167,6 +164,8 @@ class V1Public extends BaseProtocol implements IPublicPurpose {
       s,
       m2,
     );
+
+    // TODO: validate claims somewhere around here
 
     if (isVerified) {
       return { message: payload, footer };

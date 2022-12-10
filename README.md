@@ -28,7 +28,7 @@ import { v1 } from "./mod.ts";
 
 const v1PublicProvider = new v1.public(); // Create a new provider
 await v1PublicProvider.generateKey(); // Generate a new key
-let token = await v1PublicProvider.sign({"hi":"there"}); // Generate a new signed token
+let token = await v1PublicProvider.sign({ "hi": "there" }); // Generate a new signed token
 let verifiedToken = await test.verify(token); // Verify the token
 ```
 

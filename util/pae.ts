@@ -1,5 +1,7 @@
 import { ProviderError } from "../error/mod.ts";
 
+const encoder = new TextEncoder();
+
 function le64(count: number) {
   if (!Number.isSafeInteger(count)) {
     throw new ProviderError(
@@ -21,19 +23,17 @@ function le64(count: number) {
   return out;
 }
 
-function PAE(pieces: Uint8Array[]) {
+function PAE(pieces: (string | Uint8Array | undefined)[]) {
   if (!Array.isArray(pieces)) {
     throw new ProviderError("Signing failed at PAE; expected an array.");
   }
 
   let output = le64(pieces.length);
 
-  for (const p of pieces) {
-    if (!(p instanceof Uint8Array)) {
-      throw new ProviderError(
-        "Signing failed at PAE; piece is expected to be Uint8Array.",
-      );
-    }
+  for (const piece of pieces) {
+    const p: Uint8Array = piece instanceof Uint8Array
+      ? piece
+      : encoder.encode(piece);
     const len = le64(p.length);
     output = new Uint8Array([...output, ...len, ...p]);
   }
