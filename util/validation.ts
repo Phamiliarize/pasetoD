@@ -9,20 +9,7 @@ function isString(input: string) {
   return typeof input === "string";
 }
 
-function validatePayload(input: object) {
-  if (!isObject(input)) {
-    throw new ProviderError("Payloads must be an object.");
-  }
-  return input;
-}
-
-function validateFooter(input: string) {
-  if (!isString(input)) {
-    throw new ProviderError("Footer must be a string.");
-  }
-  return input;
-}
-
+/* Algorithm Lucidity - we should make sure the right keys are being used in the right places. */
 function validateKeyUsage(
   usage: string,
   key: CryptoKey | undefined,
@@ -57,6 +44,39 @@ function validateHeader(
   }
 
   return `${providerVersion}.${providerPurpose}`;
+}
+
+function validatePayload(input: object) {
+  if (!isObject(input)) {
+    throw new ProviderError("Payloads must be an object.");
+  }
+  return input;
+}
+
+/**
+ * Denies top level claims being set manually
+ * @see {@link https://github.com/paseto-standard/paseto-spec/blob/master/docs/02-Implementation-Guide/04-Claims.md
+ */
+function validateClaims(input: object) {
+  const registeredClaims = ["iss", "sub", "aud", "exp", "nbf", "iat", "jti"];
+  Object.keys(input)
+
+
+  //   Key	Name	Type	Example
+  // iss	Issuer	string	{"iss":"paragonie.com"}
+  // sub	Subject	string	{"sub":"test"}
+  // aud	Audience	string	{"aud":"pie-hosted.com"}
+  // exp	Expiration	DateTime	{"exp":"2039-01-01T00:00:00+00:00"}
+  // nbf	Not Before	DateTime	{"nbf":"2038-04-01T00:00:00+00:00"}
+  // iat	Issued At	DateTime	{"iat":"2038-03-17T00:00:00+00:00"}
+  // jti	Token Identifier	string	{"jti":"87IFSGFgPNtQNNuw0AtuLttPYFfYwOkjhqdWcLoYQHvL"}
+}
+
+function validateFooter(input: string) {
+  if (!isString(input)) {
+    throw new ProviderError("Footer must be a string.");
+  }
+  return input;
 }
 
 export {

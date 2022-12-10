@@ -48,6 +48,25 @@ type SupportedProtocols = {
   };
 };
 
+// const SUPPORTED_VERSIONS: Record<string, VersionData> = {
+//   "v1": {
+//     "sigLength": 256,
+//     "purpose": ["local", "public"],
+//   },
+//   "v2": {
+//     "sigLength": 64,
+//     "purpose": ["local", "public"],
+//   },
+//   "v3": {
+//     "sigLength": 96,
+//     "purpose": ["local", "public"],
+//   },
+//   "v4": {
+//     "sigLength": 64,
+//     "purpose": ["local", "public"],
+//   },
+// };
+
 const SUPPORTED_PROTOCOLS: SupportedProtocols = {
   v1: {
     local: {

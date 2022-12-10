@@ -151,6 +151,7 @@ class V1Public extends BaseProtocol implements IPublicPurpose {
 
     const { version, purpose, payload, footer, raw } = _parse_raw_token(
       rawToken,
+      { version: this.version, purpose: this.purpose, signatureLength: this.signatureLength }
     );
     const h = validateHeader(this.version, this.purpose, version, purpose);
     const f = footer || "";

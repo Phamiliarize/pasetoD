@@ -5,24 +5,6 @@ type VersionData = {
   "sigLength": number;
   "purpose": string[];
 };
-const SUPPORTED_VERSIONS: Record<string, VersionData> = {
-  "v1": {
-    "sigLength": 256,
-    "purpose": ["local", "public"],
-  },
-  "v2": {
-    "sigLength": 64,
-    "purpose": ["local", "public"],
-  },
-  "v3": {
-    "sigLength": 96,
-    "purpose": ["local", "public"],
-  },
-  "v4": {
-    "sigLength": 64,
-    "purpose": ["local", "public"],
-  },
-};
 
 type ParsedPaseto = {
   version: string;
@@ -35,12 +17,18 @@ type ParsedPaseto = {
   };
 };
 
+type Options = {
+  version: string;
+  purpose: string;
+  signatureLength: number;
+}
+
 /**
  * Parses a paseto token but does NOT verify it.
  * [WARNING] A parsed paseto IS NOT a verified token.
  * This is intended for internal usage.
  */
-function _parse_raw_token(token: string): ParsedPaseto {
+function _parse_raw_token(token: string, options: Options): ParsedPaseto {
   // Tokens must be UTF-8 strings
   if (typeof token !== "string") {
     throw new InvalidToken("Token is not a valid string.");
@@ -56,11 +44,11 @@ function _parse_raw_token(token: string): ParsedPaseto {
     );
   }
 
-  if (!SUPPORTED_VERSIONS[version]) {
+  if (options.version !== version) {
     throw new InvalidToken("The designated paseto version is unsupported.");
   }
 
-  if (!SUPPORTED_VERSIONS[version].purpose.includes(purpose)) {
+  if (options.purpose !== purpose) {
     throw new InvalidToken("The designated paseto purpose is unsupported.");
   }
 
@@ -86,7 +74,7 @@ function _parse_raw_token(token: string): ParsedPaseto {
     return result;
   }
 
-  const sigLength = SUPPORTED_VERSIONS[version].sigLength;
+  const sigLength = options.signatureLength;
   let rawPayload;
   let signature;
   try {
