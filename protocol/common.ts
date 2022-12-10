@@ -1,9 +1,8 @@
-import { ProviderError } from "../error/mod.ts";
 
 interface ILocalPurpose {
   version: string;
   purpose: string;
-  encrypt: () => void;
+  encrypt: (payload: Record<string, unknown>, footer: string) => void;
   decrypt: () => void;
   generateKey: () => void;
 }
@@ -12,9 +11,16 @@ interface IPublicPurpose {
   version: string;
   purpose: string;
   signatureLength: number;
-  sign: () => void;
-  verify: () => void;
-  generateKey: () => void;
+  sign: (payload: Record<string, unknown>, footer: string) => Promise<string>;
+  verify: (rawToken: string) => Promise<boolean>;
+  generateKey: () => Promise<void>;
+}
+
+interface IPasetoToken {
+    version: string;
+    purpose: string;
+    payload: unknown;
+    footer: string | undefined;
 }
 
 class BaseProtocol {
@@ -31,26 +37,9 @@ class BaseProtocol {
   }
 }
 
-type VersionKeyMap = Record<string, {
-  local: {
-    type: "secret";
-    algorithm: AesKeyGenParams;
-  };
-  public: {
-    publicKey: {
-      type: "public";
-      algorithm: RsaHashedKeyGenParams;
-    };
-    privateKey: {
-      type: "private";
-      algorithm: RsaHashedKeyGenParams;
-    };
-  };
-}>;
-
 const V1_PUBLIC_EXPONENT = new Uint8Array([0x01, 0x00, 0x01]);
 
-const SUPPORTED_PROTOCOLS: Record<string, VersionKeyMap> = {
+const SUPPORTED_PROTOCOLS = {
   v1: {
     local: {
       type: "secret",
@@ -60,37 +49,52 @@ const SUPPORTED_PROTOCOLS: Record<string, VersionKeyMap> = {
       },
     },
     public: {
-      privateKey: {
-        type: "private",
-        algorithm: {
-          name: "RSA-PSS",
-          modulusLength: 2048,
-          publicExponent: V1_PUBLIC_EXPONENT,
-          hash: { name: "SHA384" },
-        },
+      type: "keyPair",
+      algorithm: {
+        name: "RSA-PSS",
+        modulusLength: 2048,
+        publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
+        hash: { name: "SHA-384" },
       },
-      publicKey: {
-        type: "public",
-        algorithm: {
-          name: "RSA-PSS",
-          modulusLength: 2048,
-          publicExponent: V1_PUBLIC_EXPONENT,
-          hash: { name: "SHA384" },
-        },
-      },
+      pss: {
+        name: "RSA-PSS",
+        saltLength: 48,
+      }
     },
   },
 };
 
-/** Confirm a supported key is being used */
-function checkKey(version: string, purpose: string, key: CryptoKey) {
-  const VERSION = SUPPORTED_PROTOCOLS[version]
-  if(!VERSION){
-    throw new ProviderError(`Providers key is not valid for paseto protocol version ${version}.`)
-  }
-  if(!VERSION[purpose])
-}
+// /** Confirm a supported key is being used */
+// function checkKey(version: string, purpose: string, key: CryptoKey) {
+//   const protocol = SUPPORTED_PROTOCOLS[version][purpose];
+//   if(purpose === "local"){
+//     // Check Key Type, Algorithm
+//     if(protocol.type !== key.type) {
+//       throw new ProviderError(
+//         `Providers key is not valid for paseto protocol version ${version}.`,
+//       );
+//     }
+//   }
 
-export { BaseProtocol, SUPPORTED_PROTOCOLS, checkKey };
+
+//   if(purpose === "public"){
+//   }
+
+//   if
+
+
+//   key.type
+//   key.algorithm
+//   key.usages
+
+
+//   if (!VERSION[purpose]) {
+//     throw new ProviderError(
+//       `Providers key is not valid for paseto protocol version ${version}.`,
+//     );
+//   }
+// }
+
+export { BaseProtocol, SUPPORTED_PROTOCOLS, V1_PUBLIC_EXPONENT };
 export type { ILocalPurpose, IPublicPurpose };
 

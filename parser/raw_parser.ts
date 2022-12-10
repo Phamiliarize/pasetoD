@@ -1,5 +1,5 @@
 import { InvalidToken } from "../error/mod.ts";
-import { normalizeURLSafeBase64 } from "../util/mod.ts";
+import { normalizeURLSafeBase64 } from "../util/url_safe_b64.ts";
 
 type VersionData = {
   "sigLength": number;
@@ -28,7 +28,11 @@ type ParsedPaseto = {
   version: string;
   purpose: string;
   payload: unknown;
-  footer: unknown;
+  footer: string | undefined;
+  raw?: {
+    payload: string,
+    signatureBytes: Uint8Array
+  };
 };
 
 /**
@@ -83,18 +87,29 @@ function _parse_raw_token(token: string): ParsedPaseto {
   }
 
   const sigLength = SUPPORTED_VERSIONS[version].sigLength;
-  let raw_payload;
+  let rawPayload;
+  let signature;
   try {
     // atob does not support URLSafe Base64
-    raw_payload = atob(normalizeURLSafeBase64(payload)).slice(0, -sigLength);
+    let b64Decoded = atob(normalizeURLSafeBase64(payload));
+    rawPayload = b64Decoded.slice(0, -sigLength);
+    signature = b64Decoded.slice(-sigLength);
   } catch {
     throw new InvalidToken(
       "Token payload is not a valid base64-encoded string.",
     );
   }
 
+  // Save the "raw" values for use in verification
+  result.raw = {
+    payload: rawPayload,
+    signatureBytes: Uint8Array.from(signature, (x) => { 
+      return x.charCodeAt(0); 
+    })
+  }
+  
   try {
-    result.payload = JSON.parse(raw_payload);
+    result.payload = JSON.parse(rawPayload);
   } catch {
     throw new InvalidToken("Token payload is not valid JSON.");
   }

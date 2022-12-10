@@ -1,5 +1,15 @@
-import { ProviderError } from "../error/mod.ts";
-import { BaseProtocol, ILocalPurpose, IPublicPurpose } from "./common.ts";
+import { ProviderError, VerificationError } from "../error/mod.ts";
+import { _parse_raw_token } from "../parser/raw_parser.ts";
+import { packer } from "../util/packer.ts";
+import { PAE } from "../util/pae.ts";
+import { validateFooter, validatePayload } from "../util/validation.ts";
+import {
+  BaseProtocol,
+  ILocalPurpose,
+  IPasetoToken,
+  IPublicPurpose,
+  SUPPORTED_PROTOCOLS
+} from "./common.ts";
 
 const encoder = new TextEncoder();
 
@@ -95,29 +105,72 @@ class V1Public extends BaseProtocol implements IPublicPurpose {
     }
 
     this.keyPair = <V1PublicKeyPair> await crypto.subtle.generateKey(
-      {
-        name: "RSA-PSS",
-        modulusLength: 2048,
-        publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
-        hash: { name: "SHA384" },
-      },
+      SUPPORTED_PROTOCOLS.v1.public.algorithm,
       true,
       ["sign", "verify"],
     );
   }
 
-  sign(message = "", footer = ""): void {
+  async sign(message: Record<string, unknown>, footer = ""): Promise<string> {
     if (this.keyPair?.privateKey.type != "private") {
       throw new ProviderError("Tokens must be signed with a private key.");
     }
-    const h = 'v1.public';
-    const m = encoder.encode(message);
 
-    const m2 = PA;
+    const h = `${this.version}.${this.purpose}`;
+    const m = validatePayload(message);
+    const f = validateFooter(footer);
+
+    const encoded_header = encoder.encode(h);
+    const encoded_message = encoder.encode(JSON.stringify(m));
+    const encoded_footer = encoder.encode(f);
+
+    const m2 = PAE([
+      encoded_header,
+      encoded_message,
+      encoded_footer,
+    ]);
+
+    const signature = await crypto.subtle.sign(
+      SUPPORTED_PROTOCOLS.v1.public.pss,
+      this.keyPair.privateKey,
+      m2,
+    );
+    
+    return packer(h, encoded_message, signature, f);
   }
 
-  verify(): void {
-    console.log("develop an app");
+  async verify(rawToken: string): Promise<IPasetoToken> {
+    const { version, purpose, payload, footer, raw } = _parse_raw_token(rawToken);
+    const rawHeader = `${version}.${purpose}`;
+    if (rawHeader !== `${this.version}.${this.purpose}`) {
+      throw new VerificationError(
+        `Token header is not valid, expected: ${this.version}.${this.purpose}`,
+      );
+    }
+
+    const s = raw?.signatureBytes;
+    const encoded_header = encoder.encode(rawHeader);
+    const encoded_message = encoder.encode(raw?.payload);
+    const encoded_footer = encoder.encode(footer);
+
+    const m2 = PAE([
+      encoded_header,
+      encoded_message,
+      encoded_footer,
+    ]);
+
+    const isVerified = await crypto.subtle.verify(
+      SUPPORTED_PROTOCOLS.v1.public.pss,
+      this.keyPair.publicKey,
+      s,
+      m2,
+    );
+
+    if(isVerified){
+      return { version, purpose, payload, footer }
+    }
+
+    throw new VerificationError("The token failed verification.");
   }
 }
 

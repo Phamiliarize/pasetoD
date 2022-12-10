@@ -1,5 +1,5 @@
 import { assertEquals } from "https://deno.land/std@0.167.0/testing/asserts.ts";
-import { normalizeURLSafeBase64, urlSafeBase64 } from "./mod.ts";
+import { normalizeURLSafeBase64, urlSafeBase64 } from "./url_safe_b64.ts";
 
 const URL_SAFE = "bG9yZW0gaXBzdW0gZWFzdGVyIGVnZ3kgYn__d-XQgYWxs--IG92Z_XI";
 const NORMAL = "bG9yZW0gaXBzdW0gZWFzdGVyIGVnZ3kgYn//d+XQgYWxs++IG92Z/XI";

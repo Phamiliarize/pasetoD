@@ -18,8 +18,8 @@ supported:
 
 |          | v1 | v2 | v3 | v4 |
 | -------- | -- | -- | -- | -- |
-| `local`  | ✅  | ✅  | ✅  | ✅  |
-| `public` | ✅  | ✅  | ✅  | ✅  |
+| `local`  | ⛔  | ⛔  | ⛔  | ⛔  |
+| `public` | ✅  | ⛔  | ⛔  | ⛔  |
 
 ## Usage
 
@@ -58,4 +58,5 @@ In addition to the
 following paseto implementations were referenced.
 
 - [paragonie/paseto](https://github.com/paragonie/paseto)
+- [paragonie/paseto-browser](https://github.com/paragonie/paseto-browser.js/blob/master/lib/util.js)
 - [panva/paseto](https://github.com/sjudson/paseto.js/tree/master/lib)
