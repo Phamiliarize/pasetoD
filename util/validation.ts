@@ -1,34 +1,15 @@
 import { ProviderError, VerificationError } from "../error/mod.ts";
-import { REQUIRED_KEY_TYPE } from "../protocol/common.ts";
 
-function isObject(input: object) {
-  return !!input && input.constructor === Object;
+function isObject(input: unknown): boolean {
+  return input?.constructor === Object;
 }
 
-function isString(input: string) {
+function isString(input: unknown): boolean {
   return typeof input === "string";
 }
 
-/* Algorithm Lucidity - we should make sure the right keys are being used in the right places. */
-function validateKeyUsage(
-  usage: string,
-  key: CryptoKey | undefined,
-): void {
-  if (!key) {
-    throw new ProviderError(
-      "The provider has no key pair and cannot be used to sign or verify tokens.",
-    );
-  }
-  if (key.type !== REQUIRED_KEY_TYPE[usage]) {
-    throw new ProviderError(
-      `Provider key and usage mismatch. ${key.type} cannot be used to ${usage}.`,
-    );
-  }
-  if (!key.usages.includes(<KeyUsage> usage)) {
-    throw new ProviderError(
-      `Provider key and usage mismatch. Key usage definition does not include ${usage}.`,
-    );
-  }
+function isDate(input: unknown): boolean {
+  return input?.constructor === Date && !isNaN(input);
 }
 
 function validateHeader(
@@ -46,30 +27,58 @@ function validateHeader(
   return `${providerVersion}.${providerPurpose}`;
 }
 
-function validatePayload(input: object) {
-  if (!isObject(input)) {
-    throw new ProviderError("Payloads must be an object.");
-  }
-  return input;
-}
+const REGISTERED_CLAIMS_TYPES: Record<string, string> = {
+  "iss": "string",
+  "sub": "string",
+  "aud": "string",
+  "exp": "date",
+  "nbf": "date",
+  "iat": "date",
+  "jti": "string",
+};
+
+const CLAIMS_VALIDATOR: Record<string, Function> = {
+  "string": isString,
+  "date": isDate,
+};
 
 /**
- * Denies top level claims being set manually
+ * Checks that message is an object and denies registered claims being set manually
  * @see {@link https://github.com/paseto-standard/paseto-spec/blob/master/docs/02-Implementation-Guide/04-Claims.md
  */
-function validateClaims(input: object) {
-  const registeredClaims = ["iss", "sub", "aud", "exp", "nbf", "iat", "jti"];
-  Object.keys(input)
+function validateMessage(input: unknown): string {
+  if (!isObject(input)) throw new ProviderError("Payloads must be an object.");
+  const now = new Date();
+  const defaultExp = new Date(now);
+  defaultExp.setMinutes(defaultExp.getMinutes() + 10);
 
+  // Set default claims for safety purposes
+  const registeredClaims: Record<string, string> = {
+    "exp": defaultExp.toISOString(),
+    "iat": now.toISOString(),
+  };
 
-  //   Key	Name	Type	Example
-  // iss	Issuer	string	{"iss":"paragonie.com"}
-  // sub	Subject	string	{"sub":"test"}
-  // aud	Audience	string	{"aud":"pie-hosted.com"}
-  // exp	Expiration	DateTime	{"exp":"2039-01-01T00:00:00+00:00"}
-  // nbf	Not Before	DateTime	{"nbf":"2038-04-01T00:00:00+00:00"}
-  // iat	Issued At	DateTime	{"iat":"2038-03-17T00:00:00+00:00"}
-  // jti	Token Identifier	string	{"jti":"87IFSGFgPNtQNNuw0AtuLttPYFfYwOkjhqdWcLoYQHvL"}
+  for (const [key, value] of Object.entries(<object> input)) {
+    // Null is not allowed for any registeredClaims, so null
+    // can be used to empty out default values
+    if (key in REGISTERED_CLAIMS_TYPES) {
+      if (value === null) {
+        delete (<Record<string, unknown>> input)[key];
+        delete registeredClaims[key];
+        continue;
+      }
+      const t = REGISTERED_CLAIMS_TYPES[key];
+      if (CLAIMS_VALIDATOR[t](value)) {
+        registeredClaims[key] = t === "date" ? value.toISOString() : value;
+      }
+    }
+  }
+
+  try {
+    return JSON.stringify({ ...(<object> input), ...registeredClaims });
+  } catch {
+    throw new ProviderError("Payloads must be a JSON-serializable object.");
+  }
 }
 
 function validateFooter(input: string) {
@@ -79,10 +88,4 @@ function validateFooter(input: string) {
   return input;
 }
 
-export {
-  isObject,
-  validateFooter,
-  validateHeader,
-  validateKeyUsage,
-  validatePayload,
-};
+export { isObject, isString, validateFooter, validateHeader, validateMessage };

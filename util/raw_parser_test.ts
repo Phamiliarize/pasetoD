@@ -1,6 +1,6 @@
 import {
   assertEquals,
-  assertThrows
+  assertThrows,
 } from "https://deno.land/std@0.167.0/testing/asserts.ts";
 import { InvalidToken } from "../error/mod.ts";
 import { _parse_raw_token } from "./raw_parser.ts";
@@ -16,7 +16,11 @@ const BAD_PURPOSE_TOKEN =
   "v2.glorious.eyJleHAiOiIyMDM5LTAxLTAxVDAwOjAwOjAwKzAwOjAwIiwiZGF0YSI6InRoaXMgaXMgYSBzaWduZWQgbWVzc2FnZSJ91gC7-jCWsN3mv4uJaZxZp0btLJgcyVwL-svJD7f4IHyGteKe3HTLjHYTGHI1MtCqJ-ESDLNoE7otkIzamFskCA";
 
 Deno.test("[Parser][Happy] Parse a local token", () => {
-  const paseto = _parse_raw_token(LOCAL_TOKEN, { version: "v2", purpose: "public", signatureLength: 64 });
+  const paseto = _parse_raw_token(LOCAL_TOKEN, {
+    version: "v2",
+    purpose: "public",
+    signatureLength: 64,
+  });
   assertEquals(paseto, {
     version: "v2",
     purpose: "local",
@@ -26,7 +30,11 @@ Deno.test("[Parser][Happy] Parse a local token", () => {
 });
 
 Deno.test("[Parser][Happy] Parse a local token w/ footer", () => {
-  const paseto = _parse_raw_token(LOCAL_TOKEN + FOOTER, { version: "v2", purpose: "public", signatureLength: 64 });
+  const paseto = _parse_raw_token(LOCAL_TOKEN + FOOTER, {
+    version: "v2",
+    purpose: "public",
+    signatureLength: 64,
+  });
   assertEquals(paseto, {
     version: "v2",
     purpose: "local",
@@ -36,7 +44,11 @@ Deno.test("[Parser][Happy] Parse a local token w/ footer", () => {
 });
 
 Deno.test("[Parser][Happy] Parse a public token", () => {
-  const paseto = _parse_raw_token(PUBLIC_TOKEN, { version: "v2", purpose: "public", signatureLength: 64 });
+  const paseto = _parse_raw_token(PUBLIC_TOKEN, {
+    version: "v2",
+    purpose: "public",
+    signatureLength: 64,
+  });
   assertEquals(paseto, {
     version: "v2",
     purpose: "public",
@@ -49,7 +61,11 @@ Deno.test("[Parser][Happy] Parse a public token", () => {
 });
 
 Deno.test("[Parser][Happy] Parse a public token w/ footer", () => {
-  const paseto = _parse_raw_token(PUBLIC_TOKEN + FOOTER, { version: "v2", purpose: "public", signatureLength: 64 });
+  const paseto = _parse_raw_token(PUBLIC_TOKEN + FOOTER, {
+    version: "v2",
+    purpose: "public",
+    signatureLength: 64,
+  });
   assertEquals(paseto, {
     version: "v2",
     purpose: "public",
@@ -63,7 +79,12 @@ Deno.test("[Parser][Happy] Parse a public token w/ footer", () => {
 
 Deno.test("[Parser][Unhappy] Passing Non-string token value", () => {
   assertThrows(
-    () => _parse_raw_token(42, { version: "v2", purpose: "public", signatureLength: 64 }),
+    () =>
+      _parse_raw_token(42, {
+        version: "v2",
+        purpose: "public",
+        signatureLength: 64,
+      }),
     InvalidToken,
     "Token is not a valid string.",
   );
@@ -71,7 +92,12 @@ Deno.test("[Parser][Unhappy] Passing Non-string token value", () => {
 
 Deno.test("[Parser][Unhappy] Empty Token Fails", () => {
   assertThrows(
-    () => _parse_raw_token("", { version: "v2", purpose: "public", signatureLength: 64 }),
+    () =>
+      _parse_raw_token("", {
+        version: "v2",
+        purpose: "public",
+        signatureLength: 64,
+      }),
     InvalidToken,
     "Token is malformed and does not conform to paseto specifications.",
   );
@@ -79,7 +105,12 @@ Deno.test("[Parser][Unhappy] Empty Token Fails", () => {
 
 Deno.test("[Parser][Unhappy] Partial Token Fails", () => {
   assertThrows(
-    () => _parse_raw_token("v2.public", { version: "v2", purpose: "public", signatureLength: 64 }),
+    () =>
+      _parse_raw_token("v2.public", {
+        version: "v2",
+        purpose: "public",
+        signatureLength: 64,
+      }),
     InvalidToken,
     "Token is malformed and does not conform to paseto specifications.",
   );
@@ -87,7 +118,12 @@ Deno.test("[Parser][Unhappy] Partial Token Fails", () => {
 
 Deno.test("[Parser][Unhappy] Bad Version", () => {
   assertThrows(
-    () => _parse_raw_token(BAD_VER_TOKEN, { version: "v2", purpose: "public", signatureLength: 64 }),
+    () =>
+      _parse_raw_token(BAD_VER_TOKEN, {
+        version: "v2",
+        purpose: "public",
+        signatureLength: 64,
+      }),
     InvalidToken,
     "The designated paseto version is unsupported.",
   );
@@ -95,7 +131,12 @@ Deno.test("[Parser][Unhappy] Bad Version", () => {
 
 Deno.test("[Parser][Unhappy] Bad Purpose", () => {
   assertThrows(
-    () => _parse_raw_token(BAD_PURPOSE_TOKEN, { version: "v2", purpose: "public", signatureLength: 64 }),
+    () =>
+      _parse_raw_token(BAD_PURPOSE_TOKEN, {
+        version: "v2",
+        purpose: "public",
+        signatureLength: 64,
+      }),
     InvalidToken,
     "The designated paseto purpose is unsupported.",
   );
@@ -103,7 +144,12 @@ Deno.test("[Parser][Unhappy] Bad Purpose", () => {
 
 Deno.test("[Parser][Unhappy] Bad Footer - not b64", () => {
   assertThrows(
-    () => _parse_raw_token(PUBLIC_TOKEN + ".undefined", { version: "v2", purpose: "public", signatureLength: 64 }),
+    () =>
+      _parse_raw_token(PUBLIC_TOKEN + ".undefined", {
+        version: "v2",
+        purpose: "public",
+        signatureLength: 64,
+      }),
     InvalidToken,
     "Token footer is not a valid base64-encoded string.",
   );
@@ -113,7 +159,11 @@ Deno.test("[Parser][Unhappy] Bad Payload - not b64", () => {
   assertThrows(
     () => {
       const { 0: version, 1: purpose } = PUBLIC_TOKEN.split(".");
-      _parse_raw_token(`${version}.${purpose}.undefined`, { version: "v2", purpose: "public", signatureLength: 64 });
+      _parse_raw_token(`${version}.${purpose}.undefined`, {
+        version: "v2",
+        purpose: "public",
+        signatureLength: 64,
+      });
     },
     InvalidToken,
     "Token payload is not a valid base64-encoded string.",
@@ -125,7 +175,11 @@ Deno.test("[Parser][Unhappy] Bad Payload - b64 but not JSON", () => {
   assertThrows(
     () => {
       const { 0: version, 1: purpose } = PUBLIC_TOKEN.split(".");
-      _parse_raw_token(`${version}.${purpose}${FOOTER}`, { version: "v2", purpose: "public", signatureLength: 64 });
+      _parse_raw_token(`${version}.${purpose}${FOOTER}`, {
+        version: "v2",
+        purpose: "public",
+        signatureLength: 64,
+      });
     },
     InvalidToken,
     "Token payload is not valid JSON.",

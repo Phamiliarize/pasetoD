@@ -1,19 +1,19 @@
 import { ProviderError, VerificationError } from "../error/mod.ts";
+import { checkKeyPurpose } from "../util/key.ts";
 import { packer } from "../util/packer.ts";
 import { PAE } from "../util/pae.ts";
 import { _parse_raw_token } from "../util/raw_parser.ts";
 import {
   validateFooter,
   validateHeader,
-  validateKeyUsage,
-  validatePayload
+  validateMessage,
 } from "../util/validation.ts";
 import {
   BaseProtocol,
   ILocalPurpose,
   IPublicPurpose,
   IVerifiedPasetoToken,
-  SUPPORTED_PROTOCOLS
+  SUPPORTED_PROTOCOLS,
 } from "./common.ts";
 
 const encoder = new TextEncoder();
@@ -123,18 +123,18 @@ class V1Public extends BaseProtocol implements IPublicPurpose {
    * @return {Promise<string>} a signed V1 Public Paseto Token
    */
   async sign(message: Record<string, unknown>, footer = ""): Promise<string> {
-    validateKeyUsage("sign", this.keyPair.privateKey);
-    // TODO: Validate message/claims
+    // Ensure the key being used is appropriate
+    checkKeyPurpose("sign", this?.keyPair?.privateKey);
 
     const h = `${this.version}.${this.purpose}`;
-    const m = validatePayload(message);
-    const u8msg = encoder.encode(JSON.stringify(m));
+    const m = validateMessage(message);
+    const u8msg = encoder.encode(m);
     const f = validateFooter(footer);
     const m2 = PAE([h, u8msg, f]);
 
     const signature = await crypto.subtle.sign(
       SUPPORTED_PROTOCOLS.v1.public.pss,
-      this.keyPair.privateKey,
+      this?.keyPair?.privateKey,
       m2,
     );
 
@@ -147,11 +147,16 @@ class V1Public extends BaseProtocol implements IPublicPurpose {
    * @return {Promise<IVerifiedPasetoToken>} the message and footer for a verified V1 Public Paseto Token
    */
   async verify(rawToken: string): Promise<IVerifiedPasetoToken> {
-    validateKeyUsage("verify", this.keyPair.publicKey);
+    // Ensure the key being used is appropriate
+    checkKeyPurpose("verify", this?.keyPair?.publicKey);
 
     const { version, purpose, payload, footer, raw } = _parse_raw_token(
       rawToken,
-      { version: this.version, purpose: this.purpose, signatureLength: this.signatureLength }
+      {
+        version: this.version,
+        purpose: this.purpose,
+        signatureLength: this.signatureLength,
+      },
     );
     const h = validateHeader(this.version, this.purpose, version, purpose);
     const f = footer || "";
@@ -161,17 +166,18 @@ class V1Public extends BaseProtocol implements IPublicPurpose {
 
     const isVerified = await crypto.subtle.verify(
       SUPPORTED_PROTOCOLS.v1.public.pss,
-      this.keyPair.publicKey,
+      this?.keyPair?.publicKey,
       s,
       m2,
     );
 
-    // TODO: validate claims somewhere around here
-
     if (isVerified) {
+      // TODO: If verified, validate claims somewhere around here
+
       return { message: payload, footer };
     }
 
+    // Default state should be a vague failure case
     throw new VerificationError("The token failed verification.");
   }
 }

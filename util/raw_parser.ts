@@ -21,7 +21,7 @@ type Options = {
   version: string;
   purpose: string;
   signatureLength: number;
-}
+};
 
 /**
  * Parses a paseto token but does NOT verify it.

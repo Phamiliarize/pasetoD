@@ -37,7 +37,7 @@ class BaseProtocol {
 const V1_PUBLIC_EXPONENT = new Uint8Array([0x01, 0x00, 0x01]);
 
 interface IProtocol {
-  type: string;
+  type: string | Record<string, string>;
   algorithm: RsaHashedKeyAlgorithm | AesKeyAlgorithm;
   pss?: RsaPssParams;
 }
@@ -77,7 +77,7 @@ const SUPPORTED_PROTOCOLS: SupportedProtocols = {
       },
     },
     public: {
-      type: "keyPair",
+      type: { privateKey: "private", publicKey: "public" },
       algorithm: {
         name: "RSA-PSS",
         modulusLength: 2048,
@@ -101,4 +101,3 @@ const REQUIRED_KEY_TYPE: Record<string, string> = {
 
 export { BaseProtocol, REQUIRED_KEY_TYPE, SUPPORTED_PROTOCOLS };
 export type { ILocalPurpose, IPublicPurpose, IVerifiedPasetoToken };
-

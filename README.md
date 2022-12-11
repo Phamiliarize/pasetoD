@@ -23,7 +23,6 @@ supported:
 
 ## Usage
 
-
 ### Basic Example
 
 Let's generate a `v1.public` paseto token.
@@ -31,7 +30,7 @@ Let's generate a `v1.public` paseto token.
 ```js
 import { v1 } from "./mod.ts";
 
-const v1PublicProvider = new v1.public(); // Create a new provider
+const v1PublicProvider = v1.public(); // Create a new provider
 await v1PublicProvider.generateKey(); // Generate a new key
 let token = await v1PublicProvider.sign({ "hi": "there" }); // Generate a new signed token
 let verifiedToken = await test.verify(token); // Verify the token
@@ -39,30 +38,44 @@ let verifiedToken = await test.verify(token); // Verify the token
 
 ### Claims
 
-The paseto specification designates some top-level payload keys as [registered claims](https://github.com/paseto-standard/paseto-spec/blob/master/docs/02-Implementation-Guide/04-Claims.md). As a ground rule, pasetoD does not allow users to directly set registered claims during `sign` or `encrypt` actions and they must be manipulated through an `options` object instead.
+The paseto specification designates some top-level payload keys as
+[registered claims](https://github.com/paseto-standard/paseto-spec/blob/master/docs/02-Implementation-Guide/04-Claims.md).
+pasetoD validates all of these registered claims when creating a token during
+`sign` or `encrypt` actions.
 
-All registered claims are optional and are not set at default with the exception of:
+All registered claims are optional and are not set at default with the exception
+of:
+
 - `exp`
-- `iat` 
+- `iat`
 
-This exception was made to provide safer API that helps prevent accidentally issuing tokens that never expire. You can of course, disable this functionality if you are confident for some reason... though be advised there are very few good reasons to do so as paseto tokens have no revocation method natively.
+This exception was made to provide safer API that helps prevent accidentally
+issuing tokens that never expire. You can of course, disable this functionality
+if you are confident for some reason... though be advised there are _very few
+good reasons_ to do so as paseto tokens have no revocation method natively.
 
 ### Importing a Key
-Providers can be initialized on a key of your choosing, rather than generating one on-the-fly from the provider.
+
+Providers can be initialized on a key of your choosing, rather than generating
+one on-the-fly from the provider.
 
 ```js
 import { v1 } from "./mod.ts";
-const v1PublicProvider = new v1.public(MY_KEY);
+const v1PublicProvider = v1.public(MY_KEY);
 ```
 
-Keys must be __SubtleCrypto Web API__ compatible. You may find the [importKey](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/importKey) function useful.
+Keys must be **SubtleCrypto Web API** compatible. You may find the
+[importKey](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/importKey)
+function useful.
 
 ### Exporting Keys
 
-Since keys are implemented through the Crypto Web API, they can be [exported](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/exportKey).
+Since keys are implemented through the Crypto Web API, they can be
+[exported](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/exportKey).
 
-`local` purpose providers store the symmetric key as `<provider instance>.secret` and `public` providers store they asymmetric `<provider instance>.keyPair`.
-
+`local` purpose providers store the symmetric key as
+`<provider instance>.secret` and `public` providers store they asymmetric
+`<provider instance>.keyPair`.
 
 ### Testing
 
