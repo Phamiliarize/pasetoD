@@ -40,19 +40,17 @@ let verifiedToken = await test.verify(token); // Verify the token
 
 The paseto specification designates some top-level payload keys as
 [registered claims](https://github.com/paseto-standard/paseto-spec/blob/master/docs/02-Implementation-Guide/04-Claims.md).
-pasetoD validates all of these registered claims when creating a token during
-`sign` or `encrypt` actions.
 
-All registered claims are optional and are not set at default with the exception
+While validating `message` input on `sign` or `encrypt` actions, pasetoD will perform basic validation of registered claims.
+
+Registered claims are optional and are not set at default with the exception
 of:
+- `exp`: 
+- `iat`: 
 
-- `exp`
-- `iat`
+This exception was made to provide a safer API that prevents issuing a token that never expires as paseto tokens have no revocation method natively.
 
-This exception was made to provide safer API that helps prevent accidentally
-issuing tokens that never expire. You can of course, disable this functionality
-if you are confident for some reason... though be advised there are _very few
-good reasons_ to do so as paseto tokens have no revocation method natively.
+If you are confident for some reason that you do not need these values, you can pass `null` to remove them from the payload.
 
 ### Importing a Key
 
@@ -64,7 +62,9 @@ import { v1 } from "./mod.ts";
 const v1PublicProvider = v1.public(MY_KEY);
 ```
 
-Keys must be **SubtleCrypto Web API** compatible. You may find the
+Keys must be **SubtleCrypto Web API** compatible and must implement against the supported protocol details found in `utils/common.ts`.
+
+You may find the
 [importKey](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/importKey)
 function useful.
 
