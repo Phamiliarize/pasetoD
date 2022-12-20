@@ -1,4 +1,16 @@
-interface ILocalPurpose {
+interface Protocol {
+  type: string | Record<string, string>;
+  algorithm: RsaHashedKeyAlgorithm | AesKeyAlgorithm;
+  pss?: RsaPssParams;
+}
+
+type Protocols = {
+  [v1: string]: {
+    [key: string]: Protocol;
+  };
+};
+
+interface LocalPurpose {
   version: string;
   purpose: string;
   encrypt: (payload: Record<string, unknown>, footer: string) => void;
@@ -6,16 +18,16 @@ interface ILocalPurpose {
   generateKey: () => void;
 }
 
-interface IPublicPurpose {
+interface PublicPurpose {
   version: string;
   purpose: string;
   signatureLength: number;
   sign: (payload: Record<string, unknown>, footer: string) => Promise<string>;
-  verify: (rawToken: string) => Promise<IVerifiedPasetoToken>;
+  verify: (rawToken: string) => Promise<VerifiedPasetoToken>;
   generateKey: () => Promise<void>;
 }
 
-interface IVerifiedPasetoToken {
+interface VerifiedPasetoToken {
   message: unknown;
   footer: string | undefined;
 }
@@ -34,40 +46,19 @@ class BaseProtocol {
   }
 }
 
-const V1_PUBLIC_EXPONENT = new Uint8Array([0x01, 0x00, 0x01]);
-
-interface IProtocol {
-  type: string | Record<string, string>;
-  algorithm: RsaHashedKeyAlgorithm | AesKeyAlgorithm;
-  pss?: RsaPssParams;
-}
-
-type SupportedProtocols = {
-  [v1: string]: {
-    [key: string]: IProtocol;
-  };
+/* Maps the usage against the required WebAPI Crypto Key type */
+const REQUIRED_KEY_TYPE: Record<string, string> = {
+  "verify": "public",
+  "sign": "private",
+  "decrypt": "secret",
+  "encrypt": "secret",
 };
 
-// const SUPPORTED_VERSIONS: Record<string, VersionData> = {
-//   "v1": {
-//     "sigLength": 256,
-//     "purpose": ["local", "public"],
-//   },
-//   "v2": {
-//     "sigLength": 64,
-//     "purpose": ["local", "public"],
-//   },
-//   "v3": {
-//     "sigLength": 96,
-//     "purpose": ["local", "public"],
-//   },
-//   "v4": {
-//     "sigLength": 64,
-//     "purpose": ["local", "public"],
-//   },
-// };
+//   v1 sigLength: 256,
+//   v3 sigLength: 96,
+//   v2/v4 siglength: 64,
 
-const SUPPORTED_PROTOCOLS: SupportedProtocols = {
+const PROTOCOLS: Protocols = {
   v1: {
     local: {
       type: "secret",
@@ -81,7 +72,7 @@ const SUPPORTED_PROTOCOLS: SupportedProtocols = {
       algorithm: {
         name: "RSA-PSS",
         modulusLength: 2048,
-        publicExponent: V1_PUBLIC_EXPONENT,
+        publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
         hash: { name: "SHA-384" },
       },
       pss: {
@@ -92,12 +83,5 @@ const SUPPORTED_PROTOCOLS: SupportedProtocols = {
   },
 };
 
-const REQUIRED_KEY_TYPE: Record<string, string> = {
-  "verify": "public",
-  "sign": "private",
-  "decrypt": "secret",
-  "encrypt": "secret",
-};
-
-export { BaseProtocol, REQUIRED_KEY_TYPE, SUPPORTED_PROTOCOLS };
-export type { ILocalPurpose, IPublicPurpose, IVerifiedPasetoToken };
+export { BaseProtocol, REQUIRED_KEY_TYPE, PROTOCOLS };
+export type { LocalPurpose, PublicPurpose, VerifiedPasetoToken };

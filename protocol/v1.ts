@@ -4,16 +4,11 @@ import { packer } from "../util/packer.ts";
 import { PAE } from "../util/pae.ts";
 import { _parse_raw_token } from "../util/raw_parser.ts";
 import {
-  validateFooter,
-  validateHeader,
-  validateMessage,
+  validateClaims, validateFooter,
+  validateHeader, validateMessage
 } from "../util/validation.ts";
 import {
-  BaseProtocol,
-  ILocalPurpose,
-  IPublicPurpose,
-  IVerifiedPasetoToken,
-  SUPPORTED_PROTOCOLS,
+  BaseProtocol, LocalPurpose, PROTOCOLS, PublicPurpose, VerifiedPasetoToken
 } from "./common.ts";
 
 const encoder = new TextEncoder();
@@ -23,7 +18,7 @@ interface V1LocalSecretKey extends CryptoKey {
 }
 
 /** Implements a local paseto provider for protocol v1 */
-class V1Local extends BaseProtocol implements ILocalPurpose {
+class V1Local extends BaseProtocol implements LocalPurpose {
   /**
    * Create a local paseto provider for protocol v1
    * @param {V1LocalSecretKey | undefined } secretKey - Optionally initialize with predefined key
@@ -86,7 +81,7 @@ interface V1PublicKeyPair extends CryptoKeyPair {
 }
 
 /** Implements a public paseto provider for protocol v1 */
-class V1Public extends BaseProtocol implements IPublicPurpose {
+class V1Public extends BaseProtocol implements PublicPurpose {
   /**
    * Create a public paseto provider for protocol v1
    * @param {V1PublicKeyPair | undefined} keyPair - Optionally initialize with predefined key pair
@@ -110,7 +105,7 @@ class V1Public extends BaseProtocol implements IPublicPurpose {
     }
 
     this.keyPair = <V1PublicKeyPair> await crypto.subtle.generateKey(
-      SUPPORTED_PROTOCOLS.v1.public.algorithm,
+      PROTOCOLS.v1.public.algorithm,
       true,
       ["sign", "verify"],
     );
@@ -133,7 +128,7 @@ class V1Public extends BaseProtocol implements IPublicPurpose {
     const m2 = PAE([h, u8msg, f]);
 
     const signature = await crypto.subtle.sign(
-      SUPPORTED_PROTOCOLS.v1.public.pss,
+      PROTOCOLS.v1.public.pss,
       this?.keyPair?.privateKey,
       m2,
     );
@@ -144,9 +139,9 @@ class V1Public extends BaseProtocol implements IPublicPurpose {
   /**
    * Verifies a V1 Public Paseto Token
    * @param {string} rawToken - A V1 Public Paseto Token in transit form
-   * @return {Promise<IVerifiedPasetoToken>} the message and footer for a verified V1 Public Paseto Token
+   * @return {Promise<VerifiedPasetoToken>} the message and footer for a verified V1 Public Paseto Token
    */
-  async verify(rawToken: string): Promise<IVerifiedPasetoToken> {
+  async verify(rawToken: string): Promise<VerifiedPasetoToken> {
     // Ensure the key being used is appropriate
     checkKeyPurpose("verify", this?.keyPair?.publicKey);
 
@@ -165,16 +160,15 @@ class V1Public extends BaseProtocol implements IPublicPurpose {
     const m2 = PAE([h, m, f]);
 
     const isVerified = await crypto.subtle.verify(
-      SUPPORTED_PROTOCOLS.v1.public.pss,
+      PROTOCOLS.v1.public.pss,
       this?.keyPair?.publicKey,
       s,
       m2,
     );
 
     if (isVerified) {
-      // TODO: If verified, validate claims somewhere around here
-
-      return { message: payload, footer };
+      // Validate claims
+      return { message: validateClaims(payload), footer };
     }
 
     // Default state should be a vague failure case

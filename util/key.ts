@@ -1,5 +1,5 @@
 import { ProviderError } from "../error/mod.ts";
-import { REQUIRED_KEY_TYPE, SUPPORTED_PROTOCOLS } from "../protocol/common.ts";
+import { PROTOCOLS, REQUIRED_KEY_TYPE } from "../protocol/common.ts";
 
 /* Algorithm Lucidity - since keys can be "imported" we should ensure the algorithm of a key matches our defined protocols. */
 function checkKeyVersion(
@@ -7,7 +7,7 @@ function checkKeyVersion(
   usage: string,
   key: CryptoKey | CryptoKeyPair | undefined,
 ): void {
-  const protocol = SUPPORTED_PROTOCOLS[version][usage];
+  const protocol = PROTOCOLS[version][usage];
   const keyPairType = (<Record<string, string>> protocol.type);
 
   if (usage === "local") {

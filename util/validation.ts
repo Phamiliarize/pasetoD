@@ -12,6 +12,16 @@ function isDate(input: unknown): boolean {
   return input?.constructor === Date && !isNaN(input);
 }
 
+function isNotExpired(exp: Date, now: Date): boolean {
+  return exp > now;
+}
+
+function isUseableFromNow(nbf: Date, now: Date): boolean {
+  return nbf < now;
+}
+
+
+
 function validateHeader(
   providerVersion: string,
   providerPurpose: string,
@@ -41,6 +51,15 @@ const CLAIMS_VALIDATOR: Record<string, Function> = {
   "string": isString,
   "date": isDate,
 };
+
+const REHYDRATE: Record<string, Function> = {
+  "date": (input: string) => new Date(input),
+};
+
+const VERIFY_CLAIMS: Record<string, Function> = {
+  "exp": isNotExpired,
+  "nbf": isUseableFromNow
+}
 
 /**
  * Checks that message is an object and denies registered claims being set manually
@@ -81,6 +100,36 @@ function validateMessage(input: unknown): string {
   }
 }
 
+function validateClaims(input: unknown): Record<string, unknown> {
+  const now = new Date();
+
+  // Payload
+  let payload: Record<string, unknown> = {};
+
+  for (const [key, value] of Object.entries(<object> input)) {
+    // Null is not allowed for any registeredClaims, so null
+    // can be used to empty out default values
+    if (key in REGISTERED_CLAIMS_TYPES) {
+      const type = REGISTERED_CLAIMS_TYPES[key];
+      const rehydrated = type === "date" ? REHYDRATE[type](value):value;
+
+      if (!CLAIMS_VALIDATOR[type](rehydrated)) {
+        throw new VerificationError('Invalid claim type.');
+      }
+
+      if(key in VERIFY_CLAIMS && !VERIFY_CLAIMS[key](rehydrated, now)) {
+        throw new VerificationError('Verification of claims failed.');
+      }
+
+      payload[key] = rehydrated;
+    } else {
+      payload[key] = value;
+    }
+  }
+
+  return payload;
+}
+
 function validateFooter(input: string) {
   if (!isString(input)) {
     throw new ProviderError("Footer must be a string.");
@@ -88,4 +137,4 @@ function validateFooter(input: string) {
   return input;
 }
 
-export { isObject, isString, validateFooter, validateHeader, validateMessage };
+export { isObject, isString, validateFooter, validateHeader, validateClaims, validateMessage };
