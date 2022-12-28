@@ -75,6 +75,7 @@ interface V1PrivateKey extends CryptoKey {
   type: "private";
   algorithm: RsaHashedKeyGenParams;
 }
+
 interface V1PublicKeyPair extends CryptoKeyPair {
   publicKey: V1PublicKey;
   privateKey: V1PrivateKey;

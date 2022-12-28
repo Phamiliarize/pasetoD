@@ -10,6 +10,14 @@ type Protocols = {
   };
 };
 
+type VerifiedPasetoToken = {
+  message: unknown;
+  footer: string | undefined;
+}
+
+/**
+ * Local purposes should implement encrypt & decrypt methods
+ */
 interface LocalPurpose {
   version: string;
   purpose: string;
@@ -18,6 +26,9 @@ interface LocalPurpose {
   generateKey: () => void;
 }
 
+/**
+ * Public purposes should implement sign & verify methods
+ */
 interface PublicPurpose {
   version: string;
   purpose: string;
@@ -27,16 +38,12 @@ interface PublicPurpose {
   generateKey: () => Promise<void>;
 }
 
-interface VerifiedPasetoToken {
-  message: unknown;
-  footer: string | undefined;
-}
-
+/**
+ * The base protocol object, created for each version and purpose.
+ * @param {string} version - The version of the protocol object.
+ * @param {string} purpose - The purpose of the protocol object.
+ */
 class BaseProtocol {
-  /**
-   * The base protocol object
-   * @param {string} message - A human explanation for why go bad boom.
-   */
   version: string;
   purpose: string;
 
@@ -46,7 +53,7 @@ class BaseProtocol {
   }
 }
 
-/* Maps the usage against the required WebAPI Crypto Key type */
+/** Defines the WebAPI Crypto Key type required for a given usage. */
 const REQUIRED_KEY_TYPE: Record<string, string> = {
   "verify": "public",
   "sign": "private",
@@ -54,10 +61,7 @@ const REQUIRED_KEY_TYPE: Record<string, string> = {
   "encrypt": "secret",
 };
 
-//   v1 sigLength: 256,
-//   v3 sigLength: 96,
-//   v2/v4 siglength: 64,
-
+/** Constant values defining the properties of each supported protocol. */
 const PROTOCOLS: Protocols = {
   v1: {
     local: {
@@ -85,3 +89,4 @@ const PROTOCOLS: Protocols = {
 
 export { BaseProtocol, REQUIRED_KEY_TYPE, PROTOCOLS };
 export type { LocalPurpose, PublicPurpose, VerifiedPasetoToken };
+

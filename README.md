@@ -7,12 +7,20 @@ API/Web Standards compatible runtimes.
 **NOTE:** !!!This is an unstable, WIP implementation. Do not use this in any
 REAL WORLD cases yet.
 
-## Supported Platforms
+Generate and check PASETO in just __5__ lines:
+```js
+import { v1 } from "./mod.ts";
 
+const v1PublicProvider = v1.public();
+await v1PublicProvider.generateKey();
+let token = await v1PublicProvider.sign({ "hi": "there" });
+let verifiedToken = await test.verify(token);
+```
+
+## Supported Platforms
 - Deno (^1.27.2)
 
 ## Supported PASETO versions
-
 Being Web Crypto API based has limitations, be aware that only the following is
 supported:
 
@@ -23,59 +31,71 @@ supported:
 
 ## Usage
 
-### Basic Example
+### Basics
 
-Let's generate a `v1.public` paseto token.
+For each paseto protocol version, pasetoD implements the `local` and `public` purposes separately as a "provider" instance.
 
 ```js
 import { v1 } from "./mod.ts";
 
-const v1PublicProvider = v1.public(); // Create a new provider
-await v1PublicProvider.generateKey(); // Generate a new key
+const v1PublicProvider = v1.public(); // Creates a v1 public purpose provider instance
+```
+
+You can generate a key at runtime or [import a key via Crypto Web API](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/importKey).
+
+```js
+import { v1 } from "./mod.ts";
+
+// Create a provider and generate a key for it at runtime
+const v1PublicProvider = v1.public();
+await v1PublicProvider.generateKey();
+
+
+// Import a SubtleCrypto Web API key/key pair
+const v1PublicProvider = v1.public(MY_KEY);
+```
+
+Note that an instance can only ever have one key (local)/key pair(public), and once a key is initialized the key *__cannot__* be changed.
+
+Once a provider is initialized, you can use it's purpose-specific methods:
+- Local: `encrypt` & `decrypt`
+- Public: `sign` & `verify`
+
+For example:
+```js
 let token = await v1PublicProvider.sign({ "hi": "there" }); // Generate a new signed token
 let verifiedToken = await test.verify(token); // Verify the token
 ```
 
+If your key is not appropriate to the given protocol and purpose, these actions will raise an error.
+
+
 ### Claims
 
-The paseto specification designates some top-level payload keys as
+The paseto specification designates some top-level message keys as
 [registered claims](https://github.com/paseto-standard/paseto-spec/blob/master/docs/02-Implementation-Guide/04-Claims.md).
 
-While validating `message` input on `sign` or `encrypt` actions, pasetoD will perform basic validation of registered claims.
+While validating `message` input on `sign` or `encrypt` actions, pasetoD will perform basic validation of registered claims according to the specifications found above.
 
-Registered claims are optional and are not set at default with the exception
-of:
+The following claims also have default values:
 - `exp`: 
 - `iat`: 
 
-This exception was made to provide a safer API that prevents issuing a token that never expires as paseto tokens have no revocation method natively.
+This is done as a precaution to avoid accidentally issuing a token that never expires since paseto tokens have no revocation method natively.
 
 If you are confident for some reason that you do not need these values, you can pass `null` to remove them from the payload.
 
-### Importing a Key
-
-Providers can be initialized on a key of your choosing, rather than generating
-one on-the-fly from the provider.
-
-```js
-import { v1 } from "./mod.ts";
-const v1PublicProvider = v1.public(MY_KEY);
-```
-
-Keys must be **SubtleCrypto Web API** compatible and must implement against the supported protocol details found in `utils/common.ts`.
-
-You may find the
-[importKey](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/importKey)
-function useful.
-
 ### Exporting Keys
 
-Since keys are implemented through the Crypto Web API, they can be
+If you generate a key at runtime but wish to use it again, since keys are implemented through the Crypto Web API, they can be
 [exported](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/exportKey).
 
-`local` purpose providers store the symmetric key as
-`<provider instance>.secret` and `public` providers store they asymmetric
-`<provider instance>.keyPair`.
+Depending on the purpose of your provider:
+- `local` : `<provider instance>` (symmetric secret key)
+- `public` : `<provider instance>` (asymmetric key pair)
+
+
+## Contributions
 
 ### Testing
 

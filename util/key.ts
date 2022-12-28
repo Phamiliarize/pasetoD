@@ -1,7 +1,15 @@
 import { ProviderError } from "../error/mod.ts";
 import { PROTOCOLS, REQUIRED_KEY_TYPE } from "../protocol/common.ts";
 
-/* Algorithm Lucidity - since keys can be "imported" we should ensure the algorithm of a key matches our defined protocols. */
+/**
+ * Algorithm Lucidity - ensure the algorithm of a key matches our defined
+ * protocols, especially in the case of imported keys.
+ * 
+ * @param  {string} version
+ * @param  {string} usage
+ * @param  {CryptoKey|CryptoKeyPair|undefined} key
+ * @returns void
+ */
 function checkKeyVersion(
   version: string,
   usage: string,
@@ -71,7 +79,13 @@ function checkKeyVersion(
   }
 }
 
-/* We should make sure the right keys are being used for a given purpose/usage. */
+/**
+ * Check that the keys usages match the given purpose 
+ * 
+ * @param  {string} usage
+ * @param  {CryptoKey|undefined} key
+ * @returns void
+ */
 function checkKeyPurpose(
   usage: string,
   key: CryptoKey | undefined,
